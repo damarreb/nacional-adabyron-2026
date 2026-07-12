@@ -14,10 +14,11 @@ correspondiente. Idealmente, cada problema contendrá una explicación de
 diferentes aproximaciones al mismo y soluciones codificadas en algunos de los
 lenguajes permitidos en el concurso (C, C++, Java o Python 3).
 
-Las soluciones no son oficiales. En algunos casos, las soluciones habrán podido
-ser comprobadas por el juez automático del concurso (y se indicará). En otros
-casos, puede que no haya sido posible hacerlo, y es posible que contengan
-errores o no ser lo suficientemente eficientes.
+Las soluciones no son oficiales. La organización ha subido los problemas a
+Codeforces
+([enlace al concurso](https://codeforces.com/contestInvitation/c886ac149449b6993bc5836b760a4b8459c09c2d)),
+así que ha sido posible verificar todas las soluciones con el juez automático
+oficial.
 
 ## ¿Cómo colaborar?
 Para cada problema queremos tener el enunciado, al menos una explicación de
