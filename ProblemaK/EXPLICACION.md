@@ -1,62 +1,144 @@
 # Introducción a la solución
-El problema consiste en encontrar la longitud de la ventana de días más pequeña necesaria para poder ver los 3 shows. Formalmente, dada la lista de shows $s_1,...,s_N$, en la que $s_i$ denota la letra del show realizado el día $i$-ésimo ($s_i \in \{C,R,H\}$), se pide encontrar la mínima longitud entre las sublistas que contienen al menos un $C$, un $R$ y un $H$ (más adelante nos referiremos a una sublista como válida si cumple esta última condición).
+El problema consiste en encontrar la longitud de la ventana de días más pequeña
+necesaria para poder ver los 3 shows. Formalmente, dada la lista de shows
+$s_1,...,s_N$, en la que $s_i$ denota la letra del show realizado el día
+$i$-ésimo ($s_i \in \{C,R,H\}$), se pide encontrar la mínima longitud entre las
+sublistas que contienen al menos un $C$, un $R$ y un $H$ (más adelante nos
+referiremos a una sublista como válida si cumple esta última condición).
 
-# Definiciones y observaciones 
-Podemos definir $L(r)$ como la mínima longitud de la sublista válida que acaba en $c_r$. Se demuestra que esta sublista es única ya que, al fijar el extremo derecho (con valor $r$), para cada extremo izquierdo hay una longitud distinta (formalmente, ocurre porque la función de la longitud sobre el índice izquierdo, $f(l)=r-l+1$, es inyectiva).
+# La idea: una ventana deslizante
 
-También vamos a definir $lastC(r)$, $lastR(r)$ y $lastH(r)$ como el índice máximo cuya letra es $C$, $R$ o $H$, respectivamente, dentro de la ventana $c_1$,...,$c_r$. Las definiciones formales son las siguientes: 
-$$lastC(r) = \max_{i=1}^r(i \text { si } c_i = C)$$
-$$lastH(r) = \max_{i=1}^r(i \text { si } c_i = H)$$
-$$lastR(r) = \max_{i=1}^r(i \text { si } c_i = R)$$
+La estrategia es mantener una *ventana*: un rango de días consecutivos $[l, r]$
+(con ambos extremos incluidos) sobre el que llevamos la cuenta de cuántas veces
+aparece cada musical dentro de él. La ventana es, en todo momento, un candidato
+a sublista, y la iremos *deslizando* de izquierda a derecha a lo largo de la
+temporada para examinar los candidatos que nos importan.
 
-Se demuestra que el extremo izquierdo, $l$, que minimiza la longitud de la sublista válida para un extremo derecho fijo, $r$, es igual a:
-$$l=min(lastC(r),lastH(r),lastR(r))$$
+Arrancamos con la ventana más pequeña posible: un único día, el primero
+($l = r = 0$). A partir de ahí avanzamos el extremo derecho $r$ de uno en uno
+hasta el final de la temporada y, tras cada avance, ajustamos el extremo
+izquierdo. En concreto, en cada paso:
 
-La demostración es la siguiente:
+1. **Crecemos por la derecha:** incorporamos el día $r$ a la ventana e
+   incrementamos en uno la cuenta de su musical.
+2. **Encogemos por la izquierda:** mientras expulsar el día del extremo
+   izquierdo, $s_l$, deje la ventana *todavía válida* (es decir, mientras siga
+   conteniendo los tres musicales), avanzamos $l$ y descontamos ese día. Nos
+   detenemos justo antes de eliminar la última aparición de algún musical.
 
-Primero, vamos a demostrar que la sublista $c_l,\dots,c_r$ es válida:
-- como se cumple $l \leq lastC(r) \leq r$, hay al menos una letra $C$ en la sublista $c_l,\dots,c_r$.
-- como se cumple $l \leq lastH(r) \leq r$, hay al menos una letra $H$ en la sublista $c_l,\dots,c_r$.
-- como se cumple $l \leq lastR(r) \leq r$, hay al menos una letra $R$ en la sublista $c_l,\dots,c_r$.
+Después de estos dos pasos, si la ventana es válida, su longitud $r - l + 1$ es
+un candidato a la respuesta. La solución final es el mínimo de esas longitudes
+sobre todos los extremos derechos. Si al recorrer toda la temporada la ventana
+no llega a ser válida en ningún momento, es que falta algún musical y la
+respuesta es *NO SE PUEDE*.
 
-De esta manera queda demostrado que la sublista contiene al menos una letra de cada tipo, y por tanto es válida.
+## ¿Cuándo es válida la ventana?
 
-Ahora, por reducción a lo absurdo, vamos a suponer que existe otro índice $l'$ que minimiza la longitud de la sublista válida:
+Para saber si la ventana contiene los tres musicales no hace falta recorrerla:
+basta llevar, además de las cuentas por musical, un contador de *cuántos
+musicales distintos* tienen ahora mismo cuenta positiva. Cuando un musical pasa
+de $0$ a $1$ apariciones al entrar por la derecha, ese contador sube; la ventana
+es válida exactamente cuando vale $3$. Como al encoger nunca eliminamos la
+última aparición de un musical, el encogimiento no lo baja de $3$.
 
-Por un lado, de manera trivial, cualquier sublista que contenga otra sublista válida también es válida.
-Por otro lado, si $l'$ minimiza la longitud de la sublista, entonces $l' > l$, así que $l' \geq l+1$.
-Juntando las dos afirmaciones llegamos a que la sublista $c_{l+1},\dots,c_r$ es válida.
+## Por qué encoger no pierde la solución
 
-$l$ toma el valor de $lastC(r)$, $lastH(r)$ o $lastR(r)$. Suponiendo que $l=lastC(r)$, entonces $l+1 > lastC(r)$. Esto significa que la sublista $c_{l+1},\dots,c_r$ no contendría ninguna letra $C$, y por tanto no sería válida. De igual manera, se demostraría para $l=lastH(r)$ y $l=lastR(r)$.
+Fijémonos en un extremo derecho $r$ cualquiera. Entre todas las sublistas
+válidas que terminan en el día $r$, la más corta es la que tiene el extremo
+izquierdo *lo más a la derecha posible*. Y ese extremo izquierdo máximo es justo
+donde se detiene nuestro encogimiento: paramos cuando $s_l$ es la única
+aparición de su musical en la ventana, de modo que mover $l$ un paso más
+rompería la validez. Por tanto, tras procesar el día $r$, la ventana $[l, r]$ es
+exactamente la sublista válida más corta que acaba en $r$ (si es que existe
+alguna).
 
-Así llegamos a una contradicción de que no puede existir otro $l'$ que minimice la longitud de la sublista.
+Como consideramos todos los extremos derechos $r$, y para cada uno obtenemos la
+mejor sublista válida que termina ahí, el mínimo global que calculamos es la
+respuesta correcta.
 
-Por tanto nuestra solución es: $$\min_{r=1}^N\left(r-l+1\right)=\min_{r=1}^N\left(r-\min(lastC(r),lastH(r),lastR(r))+1\right)$$
+## Algoritmo
 
-# Programación dinámica
-El problema se resume a obtener $lastC(r)$, $lastH(r)$ y $lastR(r)$ para cada $r \in \{1,\dots,N\}$.
+1. Inicializar la ventana vacía: $l = 0$, las cuentas por musical a $0$, el
+   contador de musicales distintos a $0$ y la respuesta `res` a un valor
+   imposible, como `N+1` (ninguna sublista es tan larga).
+2. Para cada `r` de `0` a `N-1`: incorporar el día `r` actualizando su cuenta y,
+   si era nuevo en la ventana, el contador de distintos. Después, mientras el
+   contador valga `3` y el día `l` esté repetido (cuenta mayor que `1`),
+   descontarlo y avanzar `l`. Si el contador vale `3`, actualizar `res` con
+   `r-l+1` si es menor.
+3. Al terminar, si `res` conserva su valor imposible, escribir *NO SE PUEDE*; en
+   otro caso, escribir `res`.
 
-Podemos usar una definición recursiva sobre el índice anterior para obtener el actual:
-- $lastC(r) = \begin{cases} r & \text{si } c_r = C \\ lastC(r-1) & \text{si } c_r \neq C \end{cases}$
-- $lastH(r) = \begin{cases} r & \text{si } c_r = H \\ lastH(r-1) & \text{si } c_r \neq H \end{cases}$
-- $lastR(r) = \begin{cases} r & \text{si } c_r = R \\ lastR(r-1) & \text{si } c_r \neq R \end{cases}$
+## Coste asintótico
+
+A lo largo de todo el recorrido, cada día entra en la ventana una vez (cuando
+lo alcanza $r$) y sale de ella como mucho una vez (cuando lo rebasa $l$). El
+número total de operaciones es lineal, $O(n)$.
+
+# Alternativa: los últimos índices de cada musical
+
+Hay otra forma de encontrar, para cada extremo derecho $r$, la sublista válida
+más corta que termina en él, sin mantener una ventana explícita.
+
+Para un $r$ fijo, entre las sublistas válidas que terminan en $r$ hay una única
+más corta: fijado el extremo derecho, cada extremo izquierdo da una longitud
+distinta, así que la más corta corresponde al mayor extremo izquierdo que aún
+deja la sublista válida. Ese extremo izquierdo óptimo es
+
+$$l = \min(lastC(r), lastR(r), lastH(r)),$$
+
+donde $lastX(r)$ es el índice más grande, no mayor que $r$, en el que se
+representa el musical $X$:
+
+$$lastC(r) = \max\{i \le r : s_i = C\}$$
+
+$$lastR(r) = \max\{i \le r : s_i = R\}$$
+
+$$lastH(r) = \max\{i \le r : s_i = H\}$$
+
+## Por qué ese es el extremo izquierdo óptimo
+
+Primero, la sublista $s_l,\dots,s_r$ es válida:
+- como $l \le lastC(r) \le r$, contiene al menos una letra $C$;
+- como $l \le lastR(r) \le r$, contiene al menos una letra $R$;
+- como $l \le lastH(r) \le r$, contiene al menos una letra $H$.
+
+Y ningún extremo izquierdo mayor que $l$ deja la sublista válida. Supongamos, por
+reducción al absurdo, que existe $l' \ge l+1$ que también da una sublista válida.
+El valor $l$ es uno de los tres $last$; digamos que $l = lastC(r)$. Entonces
+$l+1 > lastC(r)$, así que la sublista $s_{l+1},\dots,s_r$ ya no contiene ninguna
+letra $C$, y por tanto tampoco la que empieza en $l' \ge l+1$: no serían válidas,
+contradicción. El mismo razonamiento vale si $l$ es $lastR(r)$ o $lastH(r)$.
+
+Por tanto $l$ es el mayor extremo izquierdo válido, es decir, el que da la
+sublista válida más corta que termina en $r$. La respuesta es
+$$\min_{r=1}^N\left(r - \min(lastC(r), lastR(r), lastH(r)) + 1\right),$$
+tomada solo sobre los $r$ para los que los tres $last$ están definidos.
+
+## Cálculo incremental (programación dinámica)
+
+Solo queda obtener los tres $last$ para cada $r$, y eso se hace de un $r$ al
+siguiente con una recurrencia inmediata:
+
+$$lastC(r) = \begin{cases} r & \text{si } s_r = C \\ lastC(r-1) & \text{si } s_r \neq C \end{cases}$$
+
+y de forma análoga para $lastR(r)$ y $lastH(r)$. Partimos del caso base
+
+$$lastC(0) = lastR(0) = lastH(0) = -1,$$
+
+donde $-1$ significa que ese musical todavía no ha aparecido (y por tanto aún no
+hay sublista válida).
 
 > [!NOTE]
-> Como para calcular $lastC(r)$ solo es necesario conocer $lastC(r-1)$, no es necesario memorizar todos los valores, solamente el anterior. Lo mismo ocurre con $lastH(r)$ y $lastR(r)$.
+> Como cada $last$ solo depende de su valor en $r-1$, no hace falta memorizar
+> todo el histórico: basta guardar el último valor de cada uno.
 
-Por otra parte, para manejar los estados inválidos, partimos del caso base $$lastC(0)=lastH(0)=lastR(0)=-1$$
-
-El valor $-1$ nos indicará que todavía no ha aparecido ninguna letra de ese tipo, y por tanto no hay ninguna sublista válida.
-
-# Algoritmo
-El algoritmo consiste en los siguientes pasos:
-1. Inicializar `lastC`, `lastH` y `lastR` al valor por defecto `-1`. También inicializar la respuesta `res` a un valor inválido por defecto, como `N+1` (todas las sublistas tienen longitud menor).
-2. Iterar sobre `r` calculando los nuevos `lastC`, `lastH` y `lastR`, y actualizar `res` si se obtiene una longitud menor que la actual, siempre que exista una sublista válida.
-3. Finalmente, si `res` sigue teniendo el valor inválido se muestra por pantalla *NO SE PUEDE*, si no se muestra el valor de `res`.
+El recorrido visita cada día una sola vez, así que también es $O(n)$.
 
 # Soluciones
 
 | Solución | Descripción | Verificado con el juez |
 | :------: | :---------- | :--------------------: |
-| [K.cpp](src/K.cpp) | Ad hoc, programación dinámica, $O(n)$ | :white_check_mark: |
-| [K.py](src/K.py) | Ad hoc, programación dinámica, $O(n)$| :white_check_mark: |
+| [K_ventana.cpp](src/K_ventana.cpp) | Ad hoc, ventana deslizante con conteo, $O(n)$ | :white_check_mark: |
+| [K_dp.cpp](src/K_dp.cpp) | Ad hoc, programación dinámica, $O(n)$ | :white_check_mark: |
+| [K_dp.py](src/K_dp.py) | Ad hoc, programación dinámica, $O(n)$ | :white_check_mark: |
